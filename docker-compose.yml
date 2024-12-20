@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  cashout-core-redis:
+    container_name: cashout-core-redis
+    image: redis:latest
+    ports:
+      - "6386:6386"
+  cashout-core:
+    container_name: cashout-core
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    restart: always
+    ports:
+      - '12000:80'
+    volumes:
+      - ./:/var/www/html
+      - /var/www/app/vendor
+    depends_on:
+      - cashout-core-redis
+
+  db:
+    image: 'mysql/mysql-server:8.0'
+    container_name: cashout-core-mysqldb
+    ports:
+      - '3308:3306'
+    environment:
+      MYSQL_ROOT_PASSWORD: 'password'
+      MYSQL_ROOT_HOST: '%'
+      MYSQL_DATABASE: 'cashout-core'
+      MYSQL_USER: 'cashout-core'
+      MYSQL_PASSWORD: 'password'
+      MYSQL_ALLOW_EMPTY_PASSWORD: 1
+    volumes:
+      - 'cashout-core-mysql:/var/lib/mysql'
+
+networks:
+  default:
+    name: cashout-core-network
+    external: false
+
+volumes:
+  cashout-core-mysql:
+    driver: local
